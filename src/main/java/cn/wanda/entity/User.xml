@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="user">
+
+	<select id="findById" parameterType="int" resultType="User">
+		select * from User where id=#{id}
+	</select>
+	
+	<insert id="insertUser" parameterType="User"
+		keyProperty="id" useGeneratedKeys="true">
+		insert into user(username,password) values(#{username},#{password})
+	</insert>
+	
+	<update id="updateUser" parameterType="User">
+		update User 
+		set password=#{password}
+		WHERE username=#{username}
+	</update>
+	
+	<delete id="deleteUser" parameterType="User">
+        delete from user where username = #{username}
+    </delete>
+	
+	<select id="loginSelect" resultType="User" parameterType="hashmap">
+		select * from User where username=#{username} and password=#{password}
+	</select>
+	
+	<select id="loginSelect2" resultType="User" parameterType="User">
+		select * from User where username=#{username} and password=#{password}
+	</select>
+	
+	<select id="selectUserList" resultType="User">
+		select * from user
+	</select>
+	
+	<resultMap id="UserMap" type="User">
+		<id property="id" column="id" /> 
+		<result property="username" column="username"/> 
+		<result property="password" column="password"/> 
+	</resultMap>
+	<select id="selectUserList2" resultMap="UserMap"> 
+		select id, username, password from user   
+	</select>
+	
+	<resultMap id="visitMap" type="User">
+        <id property="id" column="id" />
+        <result property="username" column="username" />
+        <result property="password" column="password" />
+        <collection property="visitList" column="visitID"
+            javaType="ArrayList" ofType="Visit">
+            <result property="id" column="id" />
+            <result property="visitIP" column="visitIP" />
+            <result property="visitDate" column="visitDate" />
+            <association property="user" column="userID" javaType="User">
+	            <id property="id" column="id"/>
+                <result property="username" column="username" />
+                <result property="password" column="password" />
+	        </association>
+        </collection>
+    </resultMap>
+    <select id="selectVisit" resultMap="visitMap">
+        select * from user inner join visit on user.id=visit.userID
+    </select>
+	
+	<!-- choose -->
+    <select id="selectUserChoose" resultType="User" parameterType="User">
+		select * from User where 1=1
+		<choose>
+            <when test="id!=null">
+                and id =#{id}
+            </when>
+		    <when test="username!=null">
+		        and username like #{username}
+		    </when>
+		    <otherwise>
+		        and password is not null
+		    </otherwise>
+		</choose>
+    </select>
+    
+    <!--where-->
+	<select id="selectUserWhere" resultType="User" parameterType="User">
+		select * from User
+		<where>
+			<if test="username!=null">
+				and username like #{username}
+			</if>
+			<if test="id!=null">
+				and id=#{id}
+			</if>
+		</where>
+	</select>
+	
+	<!--实现了上述相同功能-->
+	<select id="selectUserWhere2" resultType="User" parameterType="User">
+        select * from User
+        where 1=1
+        <if test="username!=null">
+            and username like #{username}
+        </if>
+        <if test="id!=null">
+            and id=#{id}
+        </if>
+    </select>
+    
+    <!-- set-->
+    <update id="updateUserSet" parameterType="User">
+        update User
+        <set>
+            <if test="username != null">username=#{username},</if>
+            <if test="password != null">password=#{password},</if>
+        </set>
+        where id=#{id}
+    </update>
+    
+    <!-- trim-->
+    <update id="updateUserTrim" parameterType="User">
+        UPDATE User 
+            <trim prefix="SET" suffixOverrides="," suffix="WHERE id = #{id}" >  
+                <if test="username != null and username != '' ">  
+                        username = #{username},
+                </if>
+                <if test="password != null and password != '' ">  
+                        password=#{password},
+                </if>  
+            </trim>
+    </update>
+    
+    <select id="selectUserWhere3" resultType="User" parameterType="User">
+	    select * from jikeuser  
+		<trim prefix="where" prefixOverrides="and|or">  
+			<if test="userName!=null">
+			    and userName like #{userName}
+			</if>
+			<if test="id!=null">
+			    and id =#{id}
+			</if>
+		</trim>
+    </select>
+    
+    <!-- foreach 循环查询-->
+    <select id="selectUserForeach" resultType="User" parameterType="list"> 
+        select * from User  
+            <where>
+                id in
+                <foreach item="item" index="index" collection="list"
+                    open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </where>
+    </select>
+    
+    <!-- foreach 循环赋值-->
+    <insert id="insertUserForeach">
+        insert into User (username, password) values  
+	    <foreach item="item" index="key" collection="list"  
+	        open="" separator="," close="">
+	        (#{key}, #{item.password})
+	    </foreach>   
+    </insert>
+	
+	
+</mapper>
